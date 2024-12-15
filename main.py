@@ -10,7 +10,10 @@ def run_traceroute(target, progressive=False, output_file=None):
         # results appear progressively
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if output_file:
-            file = open(output_file, "w")
+            try:
+                file = open(output_file, "w")
+            except IOError as error:
+                print(f"There was an error while openning the file \n Error : {error}")
         else:
             file = None
 
@@ -25,10 +28,17 @@ def run_traceroute(target, progressive=False, output_file=None):
     else:
         # results appear at the end + stored in file
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode != 0:
+                print(f"Traceroute did not execute properly : {result.stderr}")
+                return
         output = result.stdout
         if output_file:
-            with open(output_file, "w") as file:
-                file.write(output)
+            try:
+                with open(output_file, "w") as file:
+                    file.write(output)
+            except IOError as error:
+                print(f"There was an error while openning the file \n Error : {error}")
+                
         print(output)
 
 
