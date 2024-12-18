@@ -1,46 +1,56 @@
 import argparse
 import subprocess
+import re
 
 
 def run_traceroute(target, progressive=False, output_file=None):
     """Execute a traceroute command and manage its output."""
     command = ["traceroute", target]
-    
+
+    # Expression pour fetch adresses ip
+    ip_regex = r"\d+\.\d+\.\d+\.\d+"
+
     if progressive:
-        # results appear progressively
+        # Affichage progressif des résultats
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if output_file:
             try:
                 file = open(output_file, "w")
             except IOError as error:
-                print(f"There was an error while openning the file \n Error : {error}")
+                print(f"There was an error while opening the file \n Error: {error}")
         else:
             file = None
 
         for line in process.stdout:
-            print(line)
-            if file:
-                file.write(line)
+            ips = re.findall(ip_regex, line)  # Trouver IP
+            for ip in ips:
+                print(ip)  # Afficher IP 
+                if file:
+                    file.write(ip + "\n")  # Écrire l'IP fichier
         process.wait()
-    
+
         if file:
             file.close()
+
     else:
-        # results appear at the end + stored in file
+        # Résultat complet à la fin
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if result.returncode != 0:
-                print(f"Traceroute did not execute properly : {result.stderr}")
-                return
+            print(f"Traceroute did not execute properly : {result.stderr}")
+            return
         output = result.stdout
+        ips = re.findall(ip_regex, output)  # Trouver toutes les IPs dans la sortie
+
         if output_file:
             try:
                 with open(output_file, "w") as file:
-                    file.write(output)
+                    for ip in ips:
+                        file.write(ip + "\n")  # Écrire IPs dans le fichier
             except IOError as error:
-                print(f"There was an error while openning the file \n Error : {error}")
-                
-        print(output)
+                print(f"There was an error while opening the file \n Error: {error}")
 
+        for ip in ips:
+            print(ip) 
 
 
 def main():
